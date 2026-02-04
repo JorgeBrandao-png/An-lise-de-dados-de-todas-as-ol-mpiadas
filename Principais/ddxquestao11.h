@@ -2,4 +2,4 @@
 
 #pragma once
 
-int executarQuestao11(void);
+int executarDdxQuestao11(void);

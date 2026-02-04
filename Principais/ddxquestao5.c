@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-int executarQuestao5(void){
+int executarDdxQuestao5(void){
     
     return 0;
 }

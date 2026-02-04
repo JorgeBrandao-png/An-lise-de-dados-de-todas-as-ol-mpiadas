@@ -59,39 +59,26 @@ int main(){
     }
     free(arquivo);//não é mais necessário ter esse arquivo aberto.
 
-    FILE *bio = fopen("arquivoscsvs/athletes/bios.csv","r");
+    FILE *bio = fopen("arquivoscsvs/athletes/bios_locs.csv","r");
 
     fgets(linha, MAX_LINE, arquivo);//apenas para remover o cabeçalho.    
 
     while(fgets(linha, MAX_LINE, bio)){
-        char *games, *event, *team, *pos, *medal, *as, *athlete_id, *noc;
+        //o arquivo original CSV é:
+        //athlete_id,name,born_date,born_city,born_region,born_country,NOC,height_cm,weight_kg,
+        char *id, *name, *born, *born_city, *born_region, *born_country, *NOC, *height, *weight;
 
-        games = strtok(linha, ",");
-        event = strtok(NULL, ",");
-        team = strtok(NULL, ",");
-        pos = strtok(NULL, ",");
-        medal = strtok(NULL, ",");
-        as = strtok(NULL, ",");
-        athlete_id = strtok(NULL, ",");
-        noc = strtok(NULL, ",");
+        id = strtok(linha, ",");
+        name = strtok(NULL, ",");
+        born = strtok(NULL, ",");
+        born_city = strtok(NULL, ",");
+        born_region = strtok(NULL, ",");
+        born_country = strtok(NULL, ",");
+        NOC = strtok(NULL, ",");
+        height = strtok(NULL, ",");
+        weight = strtok(NULL, ",");//parte que nos interessa.
         
-        if (medal == NULL || strlen(medal) == 0) {
-            continue; // não ganhou medalha
-        }
-
-        if (athlete_id != NULL) {
-            int id = atoi(athlete_id); // converte de string para int.
-
-            int *temp = realloc(lista, (tamanho + 1) * sizeof(int));//essa parte aqui faz a lista dinâmica. que adiciona ( ou deveria adicionar ), todos os ID's dos ganhadores de determinado ano.
-            if (temp == NULL) {
-                free(lista);
-                printf("Erro de memória.\n");
-                return 1;
-            }
-            lista = temp;
-            lista[tamanho] = id;
-            tamanho++;
-        }
+        
     }
 
     return 0;

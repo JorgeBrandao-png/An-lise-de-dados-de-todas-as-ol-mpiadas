@@ -42,24 +42,22 @@ int main(){
     fgets(linha, MAX_LINE, arquivo);//apenas para remover o cabeçalho.
 
     while(fgets(linha, MAX_LINE, arquivo)){
-        char *year, *type, *discipline, *event, *as, *athlete_id, *noc, *team, *place, *tied, *medal;
+        char *games, *Event, *Team, *Pos, *Medal, *As, *athlete_id;
 
-        year = strtok(linha, ",");
-        type = strtok(NULL, ",");
-        discipline = strtok(NULL, ",");
-        event = strtok(NULL, ",");
-        as = strtok(NULL, ",");
+        //Games,Event,Team,Pos,Medal,As,athlete_id.
+
+        games = strtok(linha, ",");
+        Event = strtok(NULL, '",');
+        Team = strtok(NULL, ",");
+        Pos = strtok(NULL, ",");
+        Medal = strtok(NULL, ",");
+        As = strtok(NULL, ",");
         athlete_id = strtok(NULL, ",");
-        noc = strtok(NULL, ",");
-        team = strtok(NULL, ",");
-        place = strtok(NULL, ",");
-        tied = strtok(NULL, ",");
-        medal = strtok(NULL, "\n");
 
-        if(edicao_escolhida!=(int)(atoi(year))){
+        if(edicao_escolhida!=(atoi(games))){
             continue;// Se o ano da competição for direfernte, ele não deve contabilizar.
         }
-        if (medal==NULL ||strlen(medal) == 0 ) {//vê se ganhou medalha.
+        if (Medal==NULL ||strlen(Medal) == 0 ) {//vê se ganhou medalha.
             continue; // não ganhou medalha
         }
 
@@ -83,10 +81,11 @@ int main(){
     fgets(linha, MAX_LINE, bio);//apenas para remover o cabeçalho.    
 
     while(fgets(linha, MAX_LINE, bio)){
+        //essa parte eu acho que está certo.
         //o arquivo original CSV é:
-        //athlete_id,name,born_date,born_city,born_region,born_country,NOC,height_cm,weight_kg,
+        //athlete_id,name,born_date,born_city,born_region,born_country,NOC,height_cm,weight_kg,died_date
         char *id, *name, *born, *born_city, *born_region, *born_country, *NOC, *height, *weight;
-        double peso,altura,imc;
+        double peso,altura;
 
         //aqui abaixo está o reconhecimendo dos dados:
 
@@ -108,12 +107,10 @@ int main(){
             peso = atof(weight);
             peso_total += peso;
             qtdd_atletas += 1;//adiciona um atleta na quantidade de atletas total daquele ano.
-            continue;//achou? já é para ir para o próximo.
         }
     }
     fclose(bio);//não é mais necessário ter esse arquivo aberto.
-    printf("erro");
-    if(peso_total!=0){
+    if(qtdd_atletas!=0){
         printf("O IMC médio na olímpiada do ano de %d foi de: %.2lf",edicao_escolhida,peso_total/qtdd_atletas);
     }
     return 0;

@@ -18,7 +18,7 @@ int contemElemento(int *lista, int tamanho, int valor) {
 int main(){
     //primeireo passo será guardar o ID de todos os atletas que ganharam algum jogo de determinada edição.
 
-    double imc_total=0,qtdd_atletas=0;// esse será o que a questão pede.
+    double peso_total=0,qtdd_atletas=0;// esse será o que a questão pede.
 
     FILE *arquivo = fopen("arquivoscsvs/results/results.csv","r");//pega os arquivos com todos os jogos.
     int edicao_escolhida=9999;
@@ -54,7 +54,7 @@ int main(){
         team = strtok(NULL, ",");
         place = strtok(NULL, ",");
         tied = strtok(NULL, ",");
-        medal = strtok(NULL, ",");
+        medal = strtok(NULL, "\n");
 
         if(edicao_escolhida!=(int)(atoi(year))){
             continue;// Se o ano da competição for direfernte, ele não deve contabilizar.
@@ -97,7 +97,7 @@ int main(){
         born_region = strtok(NULL, ",");
         born_country = strtok(NULL, ",");
         NOC = strtok(NULL, ",");
-        height = strtok(NULL, ",");//parte que também nos interessa.
+        height = strtok(NULL, ",");
         weight = strtok(NULL, ",");//parte que nos interessa.
 
         if(height==NULL || strlen(height)==0 || weight==NULL || strlen(weight)==0 || id==NULL || strlen(id)==0){
@@ -105,19 +105,16 @@ int main(){
         }
 
         if(contemElemento(lista,tamanho,atoi(id)) == 1){//funçãpo para percorrer a lista e verificar se o id está presente na lista dos ganhadores.
-            peso = atoi(weight);
-            altura = atoi(height);
-            imc = peso/(altura*altura);//fazer o calculo do imc desse atleta.
-            imc_total += imc;//adicionar o imc no imc total.
+            peso = atof(weight);
+            peso_total += peso;
             qtdd_atletas += 1;//adiciona um atleta na quantidade de atletas total daquele ano.
-        }else{
-            continue;
+            continue;//achou? já é para ir para o próximo.
         }
     }
     fclose(bio);//não é mais necessário ter esse arquivo aberto.
-    if(qtdd_atletas!=0){
-        double imc_medio= imc_total/qtdd_atletas;
-        printf("O IMC médio na olímpiada do ano de %lf foi de: %.2lf",edicao_escolhida,imc_medio);
+    printf("erro");
+    if(peso_total!=0){
+        printf("O IMC médio na olímpiada do ano de %d foi de: %.2lf",edicao_escolhida,peso_total/qtdd_atletas);
     }
     return 0;
 }

@@ -60,9 +60,8 @@ int main(){
             continue; // não ganhou medalha
         }
 
-        if (strlen(athlete_id) != 0) {//verifica se há String do id do atleta
+        if (strlen(athlete_id) != 0 && athlete_id!=NULL) {//verifica se há String do id do atleta
             int id = atoi(athlete_id); // converte de string para int
-
             int *temp = realloc(lista, (tamanho + 1) * sizeof(int));//refaz a lista adicionando esse id.
             if (temp == NULL) {
                 free(lista);
@@ -99,6 +98,10 @@ int main(){
         NOC = strtok(NULL, ",");
         height = strtok(NULL, ",");//parte que também nos interessa.
         weight = strtok(NULL, ",");//parte que nos interessa.
+
+        if(height==NULL || strlen(height)==0 || weight==NULL || strlen(weight)==0 || id==NULL || strlen(id)==0){
+            continue;
+        }
 
         if(contemElemento(lista,tamanho,atoi(id)) == 1){//funçãpo para percorrer a lista e verificar se o id está presente na lista dos ganhadores.
             peso = atoi(weight);

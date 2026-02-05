@@ -7,34 +7,37 @@
 
 #define MAX_LINE 262144
 
-int contemElemento(int *v, int tamanho, int valor) {
+int contemElemento(int *lista, int tamanho, int valor) {
     for (int i = 0; i < tamanho; i++) {
-        if (v[i] == valor)
+        if (lista[i] == valor)
             return 1;
     }
     return 0;
 }
 
-int executarQuestao5(void){
+int main(){
     //primeireo passo será guardar o ID de todos os atletas que ganharam algum jogo de determinada edição.
 
-    double imc_total,qtdd_atletas=0;// esse será o que a questão pede.
+    double imc_total=0,qtdd_atletas=0;// esse será o que a questão pede.
 
     FILE *arquivo = fopen("arquivoscsvs/results/results.csv","r");//pega os arquivos com todos os jogos.
-    int edição_escolhida=9999;
+    int edicao_escolhida=9999;
     char linha[MAX_LINE];
+
     while (1==1){
         printf("Digite qual edição das olímpiadas você deseja calcular o peso médio:");
-        scanf("%d", &edição_escolhida);
-        if(edição_escolhida%2 != 0){
+        scanf("%d", &edicao_escolhida);
+        if(edicao_escolhida%2 != 0){
             printf("Nesse ano não ouve competição.");
-            return 1;// realiza o fim do programa.
+            return 0;// realiza o fim do programa.
+        }else{
+            break;
         }
     }
 
     //agora precisamos fazer uma lista dinâmica para armazenar todos os ID's dos atletas que ganharma uma olípiada em determinado ano.
-    int *lista;
-    int tamanho;
+    int *lista = NULL;
+    int tamanho = 0;
 
     fgets(linha, MAX_LINE, arquivo);//apenas para remover o cabeçalho.
 
@@ -61,7 +64,7 @@ int executarQuestao5(void){
             if (temp == NULL) {
                 free(lista);
                 printf("Erro de memória.\n");
-                return 1;
+                return 0;
             }
             lista = temp;
             lista[tamanho] = id;
@@ -105,6 +108,10 @@ int executarQuestao5(void){
         }
     }
     free(bio);//não é mais necessário ter esse arquivo aberto.
+    if(qtdd_atletas!=0){
+        double imc_medio= imc_total/qtdd_atletas;
+        printf("O IMC médio na olímpiada do ano de %d foi de: %2.lf",edicao_escolhida,imc_medio);
+    }
     return 0;
 }
  

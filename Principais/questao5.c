@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "questao5.h"
 
 #define MAX_LINE 262144
 
@@ -14,6 +13,27 @@ int contemElemento(int *lista, int tamanho, int valor) {
     }
     return 0;
 }
+
+void remover_entre_parenteses(char *str) {
+    int dentro = 0;
+    int j = 0;
+
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == '(') {
+            dentro = 1;
+            continue;
+        }
+        if (str[i] == ')') {
+            dentro = 0;
+            continue;
+        }
+        if (!dentro) {
+            str[j++] = str[i];
+        }
+    }
+    str[j] = '\0';
+}
+
 
 int main(){
     //primeireo passo será guardar o ID de todos os atletas que ganharam algum jogo de determinada edição.
@@ -46,6 +66,8 @@ int main(){
         //eu tenho que remover a parte que está entre aspas.
         //Games,Event,Team,Pos,Medal,As,athlete_id.
 
+        remover_entre_parenteses(linha);
+
         games = strtok(linha, ",");
         Event = strtok(NULL, ",");
         Team = strtok(NULL, ",");
@@ -74,18 +96,21 @@ int main(){
             tamanho++;
         }
     }
-    fclose(arquivo);//não é mais necessário ter esse arquivo aberto.
 
-    FILE *bio = fopen("arquivoscsvs/athletes/bios_locs.csv","r");
+    FILE *bio = fopen("arquivoscsvs/athletes/bios.csv","r");
 
     fgets(linha, MAX_LINE, bio);//apenas para remover o cabeçalho.    
 
     while(fgets(linha, MAX_LINE, bio)){
+
         //essa parte eu acho que está certo.
         //o arquivo original CSV é:
         //athlete_id,name,born_date,born_city,born_region,born_country,NOC,height_cm,weight_kg,died_date
+
         char *id, *name, *born, *born_city, *born_region, *born_country, *NOC, *height, *weight;
         double peso,altura;
+
+        remover_entre_parenteses(linha);
 
         //aqui abaixo está o reconhecimendo dos dados:
 
@@ -109,10 +134,11 @@ int main(){
             qtdd_atletas += 1;//adiciona um atleta na quantidade de atletas total daquele ano.
         }
     }
-    fclose(bio);//não é mais necessário ter esse arquivo aberto.
     if(qtdd_atletas!=0){
         printf("O IMC médio na olímpiada do ano de %d foi de: %.2lf",edicao_escolhida,peso_total/qtdd_atletas);
     }
+    fclose(bio);//não é mais necessário ter esse arquivo aberto.
+    fclose(arquivo);//não é mais necessário ter esse arquivo aberto.
     return 0;
 }
  

@@ -7,7 +7,7 @@
 #include "../Bibliotecas/csvUtil.h"  //biblioteca criado para facilitar a manipulação de arquivos CSV.
 #include "questao11.h" //incluindo o cabeçalho da questão 11
 //definindo o tamanho máximo, em bytes de cada linha.
-#define MAX_LINE 262144 // vou alterar para 262144, o valor aterior é 1024
+#define MAX_LINE 262144 // vou alterar para 262144, o valor aterior é 1024 
 
 int executarQuestao11(void){
 

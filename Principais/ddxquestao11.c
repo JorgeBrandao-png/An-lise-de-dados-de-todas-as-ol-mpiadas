@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "../Bibliotecas/csvUtil.h"
 #include "ddxquestao11.h"
 
@@ -12,13 +11,13 @@
 
 
 
-typedef struct{
+typedef struct{         //estrutura para guardar as edições.
     int ano;
     char estacao[10];
 } Edicao;
 
 
-typedef struct{
+typedef struct{         //estrutura para guardar o resumo de cada edição.
     Edicao edicao;
     int ouro;
     int prata;
@@ -75,6 +74,55 @@ static int edicaoExiste(const Edicao *edicoes, int total, int ano, const char *e
     return 0;
 }
 
+/* Retorna o índice de uma edição no vetor edicoes[] ou -1 se não existir */
+static int indiceEdicao(const Edicao *edicoes, int total, int ano, const char *estacao) {
+    for (int i = 0; i < total; i++) {
+        if (edicoes[i].ano == ano && strcmp(edicoes[i].estacao, estacao) == 0) return i;
+    }
+    return -1;
+}
+
+/* Zera os contadores de um resumo */
+static void zerarResumoEdicao(ResumoEdicao *r) {
+    r->ouro = 0;
+    r->prata = 0;
+    r->bronze = 0;
+    r->total = 0;
+}
+
+
+static void graficoTotalMedalhasPorEdicao(const ResumoEdicao *resumos, int n) {
+    /* escala simples para não estourar a tela */
+    int maxTotal = 0;
+    for (int i = 0; i < n; i++) {
+        if (resumos[i].total > maxTotal) maxTotal = resumos[i].total;
+    }
+
+    int escala = 1;                 /* 1 '#' = 1 medalha */
+    if (maxTotal > 60) escala = 5;  /* 1 '#' = 5 medalhas */
+    else if (maxTotal > 30) escala = 2; /* 1 '#' = 2 medalhas */
+
+    printf("\n=== Grafico: Total de medalhas por edicao (1 # = %d) ===\n", escala);
+
+    for (int i = 0; i < n; i++) {
+        int barras = resumos[i].total / escala;
+        if (resumos[i].total > 0 && barras == 0) barras = 1; /* garante visibilidade */
+
+        printf("%d %s | ", resumos[i].edicao.ano, resumos[i].edicao.estacao);
+
+        for (int j = 0; j < barras; j++) putchar('#');
+
+        printf(" (%d)\n", resumos[i].total);
+    }
+}
+
+
+
+
+
+
+
+
 int executarDdxQuestao11(void) {
     char pais[8];
     char escolha[16];
@@ -107,20 +155,19 @@ int executarDdxQuestao11(void) {
     removerQuebraLinha(linha);
     int totalCabecalho = separarCsv(linha, campos, maxCampos);
 
-    int idxYear   = encontrarIndiceColuna(campos, totalCabecalho, "Year");
-    int idxSeason = encontrarIndiceColuna(campos, totalCabecalho, "Season");
-    int idxNoc    = encontrarIndiceColuna(campos, totalCabecalho, "NOC");
-    int idxMedal  = encontrarIndiceColuna(campos, totalCabecalho, "Medal");
+    /*Estamos usando o aquivo da pasta results, ela não possui Year/Season, esta como Games.
+      Alterei o idxs para um so Games*/
 
-    /* Se seu CSV não tiver Year/Season e tiver Games, ajuste aqui:
-       int idxGames = encontrarIndiceColuna(campos, totalCabecalho, "Games");
-    */
+    int idxGames = encontrarIndiceColuna(campos, totalCabecalho, "Games");
+    int idxNoc   = encontrarIndiceColuna(campos, totalCabecalho, "NOC");
+    int idxMedal = encontrarIndiceColuna(campos, totalCabecalho, "Medal");
 
-    if (idxYear < 0 || idxSeason < 0 || idxNoc < 0 || idxMedal < 0) {
-        printf("Erro: colunas necessarias nao encontradas (Year, Season, NOC, Medal).\n");
+    if (idxGames < 0 || idxNoc < 0 || idxMedal < 0) {
+        printf("Erro: colunas necessarias nao encontradas (Games, NOC, Medal).\n");
         fclose(arquivo);
         return 1;
     }
+
 
     /* Passo A: achar a primeira medalha por estação (se for Both, acha duas) */
     int achouPrimeiraWinter = 0, achouPrimeiraSummer = 0;
@@ -135,20 +182,27 @@ int executarDdxQuestao11(void) {
         removerQuebraLinha(linha);
         int n = separarCsv(linha, campos, maxCampos);
 
-        if (n <= idxMedal || n <= idxNoc || n <= idxSeason || n <= idxYear) continue;
+        if (n <= idxMedal || n <= idxNoc || n <= idxGames) continue;
 
         const char *noc = campos[idxNoc];
-        const char *season = campos[idxSeason];
+        const char *games = campos[idxGames];
         const char *medal = campos[idxMedal];
 
-        int year;
-        if (!converterInt(campos[idxYear], &year)) continue;
+        /* ALTERAÇÃO: a coluna Games é texto (ex: "2016 Summer").
+        Então extraímos ano e estação usando a função da biblioteca. */
+        int year = 0;
+        char season[10]; /* "Summer" ou "Winter" */
+
+        if (!extrairAnoEEstacaoGames(games, &year, season, sizeof(season))) {
+            continue; /* pula linhas com Games fora do padrão */
+        }
 
         if (strcmp(noc, pais) != 0) continue;
 
         /* Filtra estação conforme escolha do usuário */
         if (strcmp(season, "Winter") == 0 && !filtrarWinter) continue;
         if (strcmp(season, "Summer") == 0 && !filtrarSummer) continue;
+
 
         /* Guarda edição de participação (única) */
         if (!edicaoExiste(edicoes, totalEdicoes, year, season)) {
@@ -188,19 +242,111 @@ int executarDdxQuestao11(void) {
     /* Ordena edições de participação */
     qsort(edicoes, (size_t)totalEdicoes, sizeof(Edicao), compararEdicao);
 
- 
+ /* Passo B: montar até 10 edições a partir da primeira medalha (por estação) */
+    ResumoEdicao resumoWinter[10];
+    int totalWinter = 0;
 
-    printf("\nBase pronta. Proximo passo: montar as 10 edicoes a partir da primeira medalha e contar.\n");
-    printf("Total edicoes encontradas (filtradas): %d\n", totalEdicoes);
+    ResumoEdicao resumoSummer[10];
+    int totalSummer = 0;
 
-    if (filtrarWinter) {
-        if (achouPrimeiraWinter) printf("Primeira medalha Winter: %d Winter\n", primeiraWinter.ano);
-        else printf("Nenhuma medalha Winter encontrada.\n");
+    /* Monta 10 Winter */
+    if (filtrarWinter && achouPrimeiraWinter) {
+        int idxInicio = indiceEdicao(edicoes, totalEdicoes, primeiraWinter.ano, "Winter");
+        if (idxInicio >= 0) {
+            for (int i = idxInicio; i < totalEdicoes && totalWinter < 10; i++) {
+                if (strcmp(edicoes[i].estacao, "Winter") == 0) {
+                    resumoWinter[totalWinter].edicao = edicoes[i];
+                    zerarResumoEdicao(&resumoWinter[totalWinter]);
+                    totalWinter++;
+                }
+            }
+        }
     }
-    if (filtrarSummer) {
-        if (achouPrimeiraSummer) printf("Primeira medalha Summer: %d Summer\n", primeiraSummer.ano);
-        else printf("Nenhuma medalha Summer encontrada.\n");
+
+    /* Monta 10 Summer */
+    if (filtrarSummer && achouPrimeiraSummer) {
+        int idxInicio = indiceEdicao(edicoes, totalEdicoes, primeiraSummer.ano, "Summer");
+        if (idxInicio >= 0) {
+            for (int i = idxInicio; i < totalEdicoes && totalSummer < 10; i++) {
+                if (strcmp(edicoes[i].estacao, "Summer") == 0) {
+                    resumoSummer[totalSummer].edicao = edicoes[i];
+                    zerarResumoEdicao(&resumoSummer[totalSummer]);
+                    totalSummer++;
+                }
+            }
+        }
+    }
+
+    /* Se não conseguiu montar nenhuma lista, encerra */
+    if ((filtrarWinter && totalWinter == 0) && (filtrarSummer && totalSummer == 0)) {
+        printf("\nNao foi possivel montar as 10 edicoes (pais sem medalha na estacao escolhida ou dados insuficientes).\n");
+        return 0;
+    }
+
+    /* Passo C: segunda passada no CSV para contar TOTAL de medalhas por edição */
+    arquivo = fopen("arquivoscsvs/results/results.csv", "r");
+    if (!arquivo) {
+        perror("Erro ao abrir results.csv (segunda passada)");
+        return 1;
+    }
+
+    /* pular cabeçalho */
+    if (!fgets(linha, sizeof(linha), arquivo)) {
+        fclose(arquivo);
+        return 1;
+    }
+
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        removerQuebraLinha(linha);
+        int n = separarCsv(linha, campos, maxCampos);
+
+        if (n <= idxMedal || n <= idxNoc || n <= idxGames) continue;
+
+        const char *noc = campos[idxNoc];
+        const char *games = campos[idxGames];
+        const char *medal = campos[idxMedal];
+
+        if (strcmp(noc, pais) != 0) continue;
+        if (!medalhaValidaLocal(medal)) continue;
+
+        int year = 0;
+        char season[10];
+        if (!extrairAnoEEstacaoGames(games, &year, season, sizeof(season))) continue;
+
+        /* Conta no Winter */
+        if (totalWinter > 0 && strcmp(season, "Winter") == 0) {
+            for (int i = 0; i < totalWinter; i++) {
+                if (resumoWinter[i].edicao.ano == year) {
+                    resumoWinter[i].total++;
+                    break;
+                }
+            }
+        }
+
+        /* Conta no Summer */
+        if (totalSummer > 0 && strcmp(season, "Summer") == 0) {
+            for (int i = 0; i < totalSummer; i++) {
+                if (resumoSummer[i].edicao.ano == year) {
+                    resumoSummer[i].total++;
+                    break;
+                }
+            }
+        }
+    }
+
+    fclose(arquivo);
+
+    /* Passo D: mostrar o gráfico */
+    if (totalWinter > 0) {
+        printf("\n--- GRAFICO WINTER (total de medalhas por edicao) ---\n");
+        graficoTotalMedalhasPorEdicao(resumoWinter, totalWinter);
+    }
+
+    if (totalSummer > 0) {
+        printf("\n--- GRAFICO SUMMER (total de medalhas por edicao) ---\n");
+        graficoTotalMedalhasPorEdicao(resumoSummer, totalSummer);
     }
 
     return 0;
+
 }
